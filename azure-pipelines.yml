@@ -12,6 +12,8 @@ variables:
     value: '$(db_password)'
   - name: TF_VAR_db_name
     value: '$(db_name)'
+  - name: TF_VAR_db_zone
+    value: '$(db_zone)'
   - name: terraformVersion
     value: '1.8.5'
   - name: TF_VAR_ssh_public_key
@@ -67,6 +69,7 @@ steps:
         export ARM_USE_AZUREAD=true
         export TF_VAR_db_password="$(db_password)"
         export TF_VAR_db_name="$(db_name)"
+        export TF_VAR_db_zone="$(db_zone)"
         export TF_VAR_ssh_public_key="$(cat $(sshPublicKey.secureFilePath))"
 
         terraform -chdir="$(Build.SourcesDirectory)" init -reconfigure
@@ -87,6 +90,7 @@ steps:
         export ARM_USE_AZUREAD=true
         export TF_VAR_db_password="$(db_password)"
         export TF_VAR_db_name="$(db_name)"
+        export TF_VAR_db_zone="$(db_zone)"
         export TF_VAR_ssh_public_key="$(cat $(sshPublicKey.secureFilePath))"
 
         terraform -chdir="$(Build.SourcesDirectory)" validate
@@ -112,6 +116,7 @@ steps:
         export ARM_USE_AZUREAD=true
         export TF_VAR_db_password="$(db_password)"
         export TF_VAR_db_name="$(db_name)"
+        export TF_VAR_db_zone="$(db_zone)"
         export TF_VAR_ssh_public_key="$(cat $(sshPublicKey.secureFilePath))"
 
         terraform -chdir="$(Build.SourcesDirectory)" plan -out=tfplan
@@ -132,6 +137,7 @@ steps:
         export ARM_USE_AZUREAD=true
         export TF_VAR_db_password="$(db_password)"
         export TF_VAR_db_name="$(db_name)"
+        export TF_VAR_db_zone="$(db_zone)"
         export TF_VAR_ssh_public_key="$(cat $(sshPublicKey.secureFilePath))"
 
         terraform -chdir="$(Build.SourcesDirectory)" apply -auto-approve tfplan
@@ -152,6 +158,7 @@ steps:
         export ARM_USE_AZUREAD=true
         export TF_VAR_db_password="$(db_password)"
         export TF_VAR_db_name="$(db_name)"
+        export TF_VAR_db_zone="$(db_zone)"
         export TF_VAR_ssh_public_key="$(cat $(sshPublicKey.secureFilePath))"
 
         PUBLIC_IP=$(terraform -chdir="$(Build.SourcesDirectory)" output -raw app_public_ip 2>/dev/null || echo "")
