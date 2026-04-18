@@ -46,6 +46,7 @@ variable "db_password" {
 variable "db_zone" {
   description = "Database SKU zone"
   type = number
+  default = 3
 }
 
 variable "ssh_public_key" {
