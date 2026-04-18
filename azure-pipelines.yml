@@ -1,0 +1,113 @@
+trigger:
+   branches:
+    include:
+      - main
+
+pool:
+  name: epicbook-deploy-agent
+
+variables:
+  TF_IN_AUTOMATION: true
+  TF_DIR: 'infra-epicbook'
+  TF_WORKING_DIR: '$(System.DefaultWorkingDirectory)/infra-epicbook'
+
+stages:
+
+# ==================================================
+# INFRASTRUCTURE STAGE (TERRAFORM)
+# ==================================================
+- stage: Infra
+  displayName: "Terraform Infrastructure"
+  jobs:
+
+  - job: TerraformJob
+    displayName: "Provision Azure Resources"
+    steps:
+
+    # ----------------------------
+    # DEBUG WORKSPACE
+    # ----------------------------
+    - script: |
+        echo "Current workspace:"
+        pwd
+        echo "Listing repo structure:"
+        ls -R $(System.DefaultWorkingDirectory)
+      displayName: "Debug Workspace"
+
+    # ----------------------------
+    # DOWNLOAD SSH KEY
+    # ----------------------------
+    - task: DownloadSecureFile@1
+      name: sshkey
+      displayName: "Download SSH Public Key"
+      inputs:
+        secureFile: azure_vm_key.pub
+
+    # ----------------------------
+    # GENERATE TFVARS
+    # ----------------------------
+    - script: |
+        set -e
+
+        KEY_PATH="$(sshkey.secureFilePath)"
+        echo "Using key file: $KEY_PATH"
+
+        if [ ! -f "$KEY_PATH" ]; then
+          echo "ERROR: SSH key file missing"
+          exit 1
+        fi
+
+        SSH_KEY=$(cat "$KEY_PATH")
+
+        if [ -z "$SSH_KEY" ]; then
+          echo "ERROR: SSH key is empty"
+          exit 1
+        fi
+
+        printf 'ssh_public_key="%s"\n' "$SSH_KEY" > pipeline.tfvars
+
+        echo "Generated tfvars:"
+        cat pipeline.tfvars
+      workingDirectory: $(TF_WORKING_DIR)
+      displayName: "Generate tfvars"
+
+    # ----------------------------
+    # TERRAFORM INIT
+    # ----------------------------
+    - script: |
+        set -e
+        terraform init -reconfigure
+      workingDirectory: $(TF_WORKING_DIR)
+      displayName: "Terraform Init"
+
+    # ----------------------------
+    # TERRAFORM PLAN
+    # ----------------------------
+    - script: |
+        set +e
+        terraform plan \
+          -var-file=pipeline.tfvars \
+          -detailed-exitcode
+        EXIT_CODE=$?
+        echo "Terraform exit code: $EXIT_CODE"
+        if [ $EXIT_CODE -eq 1 ]; then
+          echo "❌ Terraform PLAN failed"
+          exit 1
+        fi
+        if [ $EXIT_CODE -eq 2 ]; then
+          echo "✔ Terraform PLAN succeeded with changes"
+          exit 0
+        fi
+        echo "✔ Terraform PLAN succeeded with no changes"
+        exit 0
+      workingDirectory: $(TF_WORKING_DIR)
+      displayName: "Terraform Plan"
+
+    # ----------------------------
+    # TERRAFORM APPLY
+    # ----------------------------
+    - script: |
+        set -e
+        terraform apply -auto-approve -var-file=pipeline.tfvars
+      workingDirectory: $(TF_WORKING_DIR)
+      displayName: "Terraform Apply"

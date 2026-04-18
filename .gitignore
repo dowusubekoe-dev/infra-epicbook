@@ -1,0 +1,44 @@
+# ---------------------------
+# Terraform Core
+# ---------------------------
+.terraform/
+.terraform.lock.hcl
+
+# Terraform state files (NEVER COMMIT)
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+
+# Plan files (can contain sensitive data)
+*.tfplan
+
+# ---------------------------
+# CLI / Local overrides
+# ---------------------------
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Variable files (local only)
+terraform.tfvars
+terraform.tfvars.json
+
+# ---------------------------
+# Logs
+# ---------------------------
+terraform.log
+
+# ---------------------------
+# IDE / OS
+# ---------------------------
+.vscode/
+.idea/
+.DS_Store
+
+# ---------------------------
+# Azure / Cloud artifacts
+# ---------------------------
+*.pem
+*.key
