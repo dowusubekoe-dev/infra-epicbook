@@ -60,6 +60,11 @@ steps:
       scriptLocation: 'inlineScript'
       inlineScript: |
         set -e
+        export ARM_CLIENT_ID="$servicePrincipalId"
+        export ARM_CLIENT_SECRET="$servicePrincipalKey"
+        export ARM_TENANT_ID="$tenantId"
+        export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+        export ARM_USE_AZUREAD=true
         export TF_VAR_db_password="$(db_password)"
         export TF_VAR_db_name="$(db_name)"
         export TF_VAR_ssh_public_key="$(cat $(sshPublicKey.secureFilePath))"
@@ -75,6 +80,11 @@ steps:
       scriptLocation: 'inlineScript'
       inlineScript: |
         set -e
+        export ARM_CLIENT_ID="$servicePrincipalId"
+        export ARM_CLIENT_SECRET="$servicePrincipalKey"
+        export ARM_TENANT_ID="$tenantId"
+        export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+        export ARM_USE_AZUREAD=true
         export TF_VAR_db_password="$(db_password)"
         export TF_VAR_db_name="$(db_name)"
         export TF_VAR_ssh_public_key="$(cat $(sshPublicKey.secureFilePath))"
@@ -95,6 +105,11 @@ steps:
       scriptLocation: 'inlineScript'
       inlineScript: |
         set -e
+        export ARM_CLIENT_ID="$servicePrincipalId"
+        export ARM_CLIENT_SECRET="$servicePrincipalKey"
+        export ARM_TENANT_ID="$tenantId"
+        export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+        export ARM_USE_AZUREAD=true
         export TF_VAR_db_password="$(db_password)"
         export TF_VAR_db_name="$(db_name)"
         export TF_VAR_ssh_public_key="$(cat $(sshPublicKey.secureFilePath))"
@@ -110,6 +125,11 @@ steps:
       scriptLocation: 'inlineScript'
       inlineScript: |
         set -e
+        export ARM_CLIENT_ID="$servicePrincipalId"
+        export ARM_CLIENT_SECRET="$servicePrincipalKey"
+        export ARM_TENANT_ID="$tenantId"
+        export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+        export ARM_USE_AZUREAD=true
         export TF_VAR_db_password="$(db_password)"
         export TF_VAR_db_name="$(db_name)"
         export TF_VAR_ssh_public_key="$(cat $(sshPublicKey.secureFilePath))"
@@ -125,6 +145,11 @@ steps:
       scriptLocation: 'inlineScript'
       inlineScript: |
         set -e
+        export ARM_CLIENT_ID="$servicePrincipalId"
+        export ARM_CLIENT_SECRET="$servicePrincipalKey"
+        export ARM_TENANT_ID="$tenantId"
+        export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+        export ARM_USE_AZUREAD=true
         export TF_VAR_db_password="$(db_password)"
         export TF_VAR_db_name="$(db_name)"
         export TF_VAR_ssh_public_key="$(cat $(sshPublicKey.secureFilePath))"
