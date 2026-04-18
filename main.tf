@@ -127,10 +127,14 @@ resource "azurerm_subnet_network_security_group_association" "web_nsa" {
 # PUBLIC IP
 ############################
 resource "azurerm_public_ip" "app" {
-  name                = "app-public-ip"
+  name                = "epicbook-public-ip"
   location            = var.location
   resource_group_name = azurerm_resource_group.rg.name
   allocation_method   = "Static"
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 ############################
@@ -181,7 +185,7 @@ resource "azurerm_linux_virtual_machine" "app_vm" {
 
   admin_ssh_key {
     username   = var.admin_username
-    public_key = file(pathexpand(var.ssh_public_key))
+    public_key = var.ssh_public_key
   }
 
   os_disk {
@@ -206,12 +210,12 @@ resource "azurerm_mysql_flexible_server" "main" {
   location            = azurerm_resource_group.rg.location
 
   administrator_login    = var.db_admin_user
-  administrator_password = var.db_admin_password
+  administrator_password = var.db_password
 
   sku_name = "B_Standard_B1ms"
   version  = "8.0.21"
 
-  zone = "3"
+  zone = var.db_zone
 
   delegated_subnet_id = azurerm_subnet.db_subnet.id
   private_dns_zone_id = azurerm_private_dns_zone.mysql_dns.id
@@ -222,8 +226,9 @@ resource "azurerm_mysql_flexible_server" "main" {
     ]
   }
 
-  depends_on = [
-    azurerm_private_dns_zone_virtual_network_link.mysql_dns_link
+   depends_on = [
+    azurerm_private_dns_zone_virtual_network_link.mysql_dns_link,
+    azurerm_subnet.db_subnet
   ]
 }
 

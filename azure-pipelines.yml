@@ -8,14 +8,21 @@ pool:
 
 variables:
   - group: epicbook-secrets
+  - name: TF_VAR_db_password
+    value: '$(db_password)'
+  - name: TF_VAR_db_name
+    value: '$(db_name)'
   - name: terraformVersion
     value: '1.8.5'
+  - name: TF_VAR_ssh_public_key
+    value: '$(sshPublicKey.secureFilePath)'
   - name: azureServiceConnection
     value: 'epicbook-devops-sb'
 
 steps:
   - checkout: self
     displayName: 'Checkout repository'
+
 
   - task: DownloadSecureFile@1
     name: sshPublicKey
@@ -53,13 +60,31 @@ steps:
       scriptLocation: 'inlineScript'
       inlineScript: |
         set -e
-        export ARM_CLIENT_ID="$servicePrincipalId"
-        export ARM_CLIENT_SECRET="$servicePrincipalKey"
-        export ARM_TENANT_ID="$tenantId"
-        export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
         export TF_VAR_db_password="$(db_password)"
+        export TF_VAR_db_name="$(db_name)"
+        export TF_VAR_ssh_public_key="$(cat $(sshPublicKey.secureFilePath))"
 
         terraform -chdir="$(Build.SourcesDirectory)" init -reconfigure
+
+  - task: AzureCLI@2
+    displayName: 'Terraform Validate'
+    inputs:
+      azureSubscription: '$(azureServiceConnection)'
+      addSpnToEnvironment: true
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        set -e
+        export TF_VAR_db_password="$(db_password)"
+        export TF_VAR_db_name="$(db_name)"
+        export TF_VAR_ssh_public_key="$(cat $(sshPublicKey.secureFilePath))"
+
+        terraform -chdir="$(Build.SourcesDirectory)" validate
+
+  - script: |
+      terraform -chdir="$(Build.SourcesDirectory)" fmt -check
+      terraform -chdir="$(Build.SourcesDirectory)" validate
+    displayName: 'Terraform Validate'
 
   - task: AzureCLI@2
     displayName: 'Terraform Plan'
@@ -70,11 +95,9 @@ steps:
       scriptLocation: 'inlineScript'
       inlineScript: |
         set -e
-        export ARM_CLIENT_ID="$servicePrincipalId"
-        export ARM_CLIENT_SECRET="$servicePrincipalKey"
-        export ARM_TENANT_ID="$tenantId"
-        export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
         export TF_VAR_db_password="$(db_password)"
+        export TF_VAR_db_name="$(db_name)"
+        export TF_VAR_ssh_public_key="$(cat $(sshPublicKey.secureFilePath))"
 
         terraform -chdir="$(Build.SourcesDirectory)" plan -out=tfplan
 
@@ -87,11 +110,9 @@ steps:
       scriptLocation: 'inlineScript'
       inlineScript: |
         set -e
-        export ARM_CLIENT_ID="$servicePrincipalId"
-        export ARM_CLIENT_SECRET="$servicePrincipalKey"
-        export ARM_TENANT_ID="$tenantId"
-        export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
         export TF_VAR_db_password="$(db_password)"
+        export TF_VAR_db_name="$(db_name)"
+        export TF_VAR_ssh_public_key="$(cat $(sshPublicKey.secureFilePath))"
 
         terraform -chdir="$(Build.SourcesDirectory)" apply -auto-approve tfplan
 
@@ -104,14 +125,12 @@ steps:
       scriptLocation: 'inlineScript'
       inlineScript: |
         set -e
-        export ARM_CLIENT_ID="$servicePrincipalId"
-        export ARM_CLIENT_SECRET="$servicePrincipalKey"
-        export ARM_TENANT_ID="$tenantId"
-        export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
         export TF_VAR_db_password="$(db_password)"
+        export TF_VAR_db_name="$(db_name)"
+        export TF_VAR_ssh_public_key="$(cat $(sshPublicKey.secureFilePath))"
 
-        PUBLIC_IP=$(terraform -chdir="$(Build.SourcesDirectory)" output -raw public_ip)
-        DB_HOST=$(terraform -chdir="$(Build.SourcesDirectory)" output -raw db_host)
+        PUBLIC_IP=$(terraform -chdir="$(Build.SourcesDirectory)" output -raw app_public_ip 2>/dev/null || echo "")
+        DB_HOST=$(terraform -chdir="$(Build.SourcesDirectory)" output -raw db_host 2>/dev/null || echo "")
 
         mkdir -p "$(Build.ArtifactStagingDirectory)"
 

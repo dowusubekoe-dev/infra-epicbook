@@ -43,12 +43,20 @@ variable "db_password" {
   sensitive   = true
 }
 
+variable "db_zone" {
+  description = "Database SKU zone"
+  type = number
+}
+
 variable "ssh_public_key" {
   type = string
 }
 
 variable "resource_prefix" {
   description = "Prefix for all resources"
+  type        = string
+  default     = "epicbook-dob"
+
 }
 
 variable "vm_size" {
