@@ -236,7 +236,7 @@ resource "azurerm_mysql_flexible_server" "main" {
 # MYSQL DATABASE
 ############################
 resource "azurerm_mysql_flexible_database" "db" {
-  name                = "epicbookdb"
+  name                = "bookstore"
   resource_group_name = azurerm_resource_group.rg.name
   server_name         = azurerm_mysql_flexible_server.main.name
   charset             = "utf8"
