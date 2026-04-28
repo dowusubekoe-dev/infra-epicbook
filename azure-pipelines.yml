@@ -114,7 +114,7 @@ steps:
         export TF_VAR_db_password="$(db_password)"
         export TF_VAR_public_key="$(sshPublicKey.secureFilePath)"
 
-        terraform -chdir="$(Build.SourcesDirectory)" apply -auto-approve -var-file="$(Build.SourcesDirectory)/terraform.tfvars" tfplan
+        terraform -chdir="$(Build.SourcesDirectory)" apply -auto-approve tfplan
 
   - task: AzureCLI@2
     displayName: 'Write Terraform outputs to artifact file'
