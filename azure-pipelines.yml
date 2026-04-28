@@ -51,6 +51,18 @@ steps:
       ls -l ~/.ssh
     displayName: 'Prepare SSH Public Key'
 
+  - script: |
+      cat > "$(Build.SourcesDirectory)/terraform.tfvars" <<EOF
+      location        = "canadacentral"
+      resource_prefix = "dmi-ch2-epicbook-prod"
+      vm_size         = "Standard_D2s_v3"
+      admin_username  = "azureuser"
+      public_key      = "/home/azureuser/.ssh/id_ed25519.pub"
+      db_name         = "bookstore"
+      db_user         = "dbadmin"
+      EOF
+    displayName: 'Create terraform.tfvars'
+
   - task: AzureCLI@2
     displayName: 'Terraform Init'
     inputs:
