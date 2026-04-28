@@ -28,7 +28,7 @@ steps:
     name: sshPublicKey
     displayName: 'Download SSH public key'
     inputs:
-      secureFile: 'id_ed25519.pub'
+      secureFile: 'id_rsa.pub'
 
   - script: |
       sudo apt-get update
@@ -46,8 +46,8 @@ steps:
 
   - script: |
       mkdir -p ~/.ssh
-      cp "$(sshPublicKey.secureFilePath)" ~/.ssh/id_ed25519.pub
-      chmod 644 ~/.ssh/id_ed25519.pub
+      cp "$(sshPublicKey.secureFilePath)" ~/.ssh/id_rsa.pub
+      chmod 644 ~/.ssh/id_rsa.pub
       ls -l ~/.ssh
     displayName: 'Prepare SSH Public Key'
 
@@ -57,7 +57,7 @@ steps:
       resource_prefix = "dmi-ch2-epicbook-prod"
       vm_size         = "Standard_D2s_v3"
       admin_username  = "azureuser"
-      public_key      = "/home/azureuser/.ssh/id_ed25519.pub"
+      public_key      = "/home/azureuser/.ssh/id_rsa.pub"
       db_name         = "bookstore"
       db_user         = "dbadmin"
       EOF
