@@ -1,35 +1,33 @@
 variable "location" {
-  description = "The Azure Region to deploy resources"
-  type        = string
-  default     = "South Africa North"
+  description = "Azure region"
+}
+
+variable "resource_prefix" {
+  description = "Prefix for all resources"
 }
 
 variable "vm_size" {
-  description = "The size of the Virtual Machine"
-  type        = string
-  default     = "Standard_B2ats_v2"
+  description = "Azure VM size"
 }
 
-variable "admin_user" {
-  description = "The admin username for the VM"
-  type        = string
-  default     = "azureuser"
+variable "admin_username" {
+  description = "VM admin username"
 }
 
-variable "ssh_public_key_path" {
-  description = "Path to your local SSH public key"
+variable "public_key" {
+  description = "Path to SSH public key file used for VM login"
   type        = string
-  default     = "~/.ssh/id_ed25519.pub"
+}
+
+variable "db_name" {
+  description = "Database name"
 }
 
 variable "db_user" {
-  description = "MySQL Administrator Username"
-  type        = string
-  default     = "dbadmin"
+  description = "Database admin username"
 }
 
 variable "db_password" {
-  description = "MySQL Administrator Password"
-  type        = string
+  description = "MySQL database password"
   sensitive   = true
 }
