@@ -1,97 +1,37 @@
-terraform {
-  required_version = ">= 1.4.0"
-
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 4.69"
-    }
-
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.6"
-    }
-
-    local = {
-      source  = "hashicorp/local"
-      version = "~> 2.5"
-    }
-  }
+# 1. Random ID for Unique Naming
+resource "random_id" "id" {
+  byte_length = 4
 }
 
-provider "azurerm" {
-  features {}
+# 2. Resource Group (Existing)
+data "azurerm_resource_group" "rg" {
+  name = "rg-epicbook"
 }
 
-############################
-# RANDOM SUFFIX
-############################
-resource "random_string" "mysql_suffix" {
-  length  = 6
-  upper   = false
-  special = false
-}
-
-############################
-# RESOURCE GROUP
-############################
-resource "azurerm_resource_group" "rg" {
-  name     = "epicbook-rg"
-  location = var.location
-}
-
-############################
-# VIRTUAL NETWORK
-############################
+# 3. Virtual Network
 resource "azurerm_virtual_network" "vnet" {
-  name                = "epicbook-vnet"
-  location            = var.location
-  resource_group_name = azurerm_resource_group.rg.name
+  name                = "vnet-epicbook-${random_id.id.hex}"
   address_space       = ["10.0.0.0/16"]
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
 }
 
-############################
-# APP SUBNET
-############################
-resource "azurerm_subnet" "app_subnet" {
-  name                 = "app-subnet"
-  resource_group_name  = azurerm_resource_group.rg.name
+# 4. Subnet
+resource "azurerm_subnet" "subnet" {
+  name                 = "snet-epicbook-${random_id.id.hex}"
+  resource_group_name  = data.azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet.name
   address_prefixes     = ["10.0.1.0/24"]
 }
 
-############################
-# DB SUBNET (MYSQL DELEGATED)
-############################
-resource "azurerm_subnet" "db_subnet" {
-  name                 = "db-subnet"
-  resource_group_name  = azurerm_resource_group.rg.name
-  virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes     = ["10.0.2.0/24"]
-
-  delegation {
-    name = "mysql-delegation"
-
-    service_delegation {
-      name = "Microsoft.DBforMySQL/flexibleServers"
-
-      actions = [
-        "Microsoft.Network/virtualNetworks/subnets/join/action"
-      ]
-    }
-  }
-}
-
-############################
-# NSG
-############################
-resource "azurerm_network_security_group" "app_nsg" {
-  name                = "app-nsg"
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
+# 5. Network Security Group
+resource "azurerm_network_security_group" "nsg" {
+  name                = "nsg-epicbook-${random_id.id.hex}"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
 
   security_rule {
-    name                       = "allow-ssh"
+    name                       = "Allow-SSH"
     priority                   = 100
     direction                  = "Inbound"
     access                     = "Allow"
@@ -103,8 +43,8 @@ resource "azurerm_network_security_group" "app_nsg" {
   }
 
   security_rule {
-    name                       = "allow-http"
-    priority                   = 110
+    name                       = "Allow-HTTP"
+    priority                   = 200
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "Tcp"
@@ -115,80 +55,54 @@ resource "azurerm_network_security_group" "app_nsg" {
   }
 }
 
-############################
-# NSG ASSOCIATION (FIXED)
-############################
-resource "azurerm_subnet_network_security_group_association" "web_nsa" {
-  subnet_id                 = azurerm_subnet.app_subnet.id
-  network_security_group_id = azurerm_network_security_group.app_nsg.id
+resource "azurerm_subnet_network_security_group_association" "nsg_assoc" {
+  subnet_id                 = azurerm_subnet.subnet.id
+  network_security_group_id = azurerm_network_security_group.nsg.id
 }
 
-############################
-# PUBLIC IP
-############################
-resource "azurerm_public_ip" "app" {
-  name                = "epicbook-public-ip"
-  location            = var.location
-  resource_group_name = azurerm_resource_group.rg.name
+# 6. Public IP
+resource "azurerm_public_ip" "pip" {
+  name                = "pip-epicbook-${random_id.id.hex}"
+  resource_group_name = data.azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.rg.location
   allocation_method   = "Static"
-
-  lifecycle {
-    create_before_destroy = true
-  }
+  sku                 = "Standard"
 }
 
-############################
-# NIC
-############################
-resource "azurerm_network_interface" "app_nic" {
-  name                = "app-nic"
-  location            = var.location
-  resource_group_name = azurerm_resource_group.rg.name
+# 7. Network Interface
+resource "azurerm_network_interface" "nic" {
+  name                = "nic-epicbook-${random_id.id.hex}"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
 
   ip_configuration {
     name                          = "internal"
-    subnet_id                     = azurerm_subnet.app_subnet.id
+    subnet_id                     = azurerm_subnet.subnet.id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.app.id
+    public_ip_address_id          = azurerm_public_ip.pip.id
   }
 }
 
-############################
-# MYSQL PRIVATE DNS
-############################
-resource "azurerm_private_dns_zone" "mysql_dns" {
-  name                = "privatelink.mysql.database.azure.com"
-  resource_group_name = azurerm_resource_group.rg.name
-}
-
-resource "azurerm_private_dns_zone_virtual_network_link" "mysql_dns_link" {
-  name                  = "mysql-dns-link"
-  resource_group_name   = azurerm_resource_group.rg.name
-  private_dns_zone_name = azurerm_private_dns_zone.mysql_dns.name
-  virtual_network_id    = azurerm_virtual_network.vnet.id
-}
-
-############################
-# LINUX VM (APP)
-############################
-resource "azurerm_linux_virtual_machine" "app_vm" {
-  name                = "epicbook-app-vm"
-  location            = var.location
-  resource_group_name = azurerm_resource_group.rg.name
-  size                = var.vm_size
-
-  admin_username = var.admin_username
+# 8. Virtual Machine
+resource "azurerm_linux_virtual_machine" "main" {
+  name                            = "vm-epicbook-${random_id.id.hex}"
+  resource_group_name             = data.azurerm_resource_group.rg.name
+  location                        = data.azurerm_resource_group.rg.location
+  size                            = var.vm_size
+  admin_username                  = var.admin_user
+  disable_password_authentication = true
 
   network_interface_ids = [
-    azurerm_network_interface.app_nic.id
+    azurerm_network_interface.nic.id,
   ]
 
   admin_ssh_key {
-    username   = var.admin_username
-    public_key = var.ssh_public_key
+    username   = var.admin_user
+    public_key = file(var.ssh_public_key_path)
   }
 
   os_disk {
+    name                 = "osdisk-epicbook-${random_id.id.hex}"
     caching              = "ReadWrite"
     storage_account_type = "Standard_LRS"
   }
@@ -201,44 +115,32 @@ resource "azurerm_linux_virtual_machine" "app_vm" {
   }
 }
 
-############################
-# MYSQL FLEXIBLE SERVER (FIXED VERSION)
-############################
-resource "azurerm_mysql_flexible_server" "main" {
-  name                = "epicbook-mysql-${random_string.mysql_suffix.result}"
-  resource_group_name = azurerm_resource_group.rg.name
-  location            = azurerm_resource_group.rg.location
-
-  administrator_login    = var.db_admin_user
+# 9. MySQL Flexible Server
+resource "azurerm_mysql_flexible_server" "db" {
+  name                   = "mysql-epicbook-${random_id.id.hex}"
+  resource_group_name    = data.azurerm_resource_group.rg.name
+  location               = data.azurerm_resource_group.rg.location
+  administrator_login    = var.db_user
   administrator_password = var.db_password
-
-  sku_name = "B_Standard_B1ms"
-  version  = "8.0.21"
-
-  zone = var.db_zone
-
-  delegated_subnet_id = azurerm_subnet.db_subnet.id
-  private_dns_zone_id = azurerm_private_dns_zone.mysql_dns.id
-
-  lifecycle {
-    ignore_changes = [
-      zone
-    ]
-  }
-
-   depends_on = [
-    azurerm_private_dns_zone_virtual_network_link.mysql_dns_link,
-    azurerm_subnet.db_subnet
-  ]
+  sku_name               = "B_Standard_B1ms"
+  version                = "8.0.21"
 }
 
-############################
-# MYSQL DATABASE
-############################
-resource "azurerm_mysql_flexible_database" "db" {
-  name                = "bookstore"
-  resource_group_name = azurerm_resource_group.rg.name
-  server_name         = azurerm_mysql_flexible_server.main.name
-  charset             = "utf8"
-  collation           = "utf8_unicode_ci"
+resource "azurerm_mysql_flexible_server_firewall_rule" "allow_all" {
+  name                = "AllowAllIPs"
+  resource_group_name = data.azurerm_resource_group.rg.name
+  server_name         = azurerm_mysql_flexible_server.db.name
+  start_ip_address    = "0.0.0.0"
+  end_ip_address      = "255.255.255.255"
+}
+
+# 10. Outputs
+output "app_public_ip" {
+  description = "The public IP of the EpicBook App VM"
+  value       = azurerm_public_ip.pip.ip_address
+}
+
+output "mysql_fqdn" {
+  description = "The Endpoint URL of the MySQL Database"
+  value       = azurerm_mysql_flexible_server.db.fqdn
 }

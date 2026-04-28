@@ -1,79 +1,35 @@
-variable "rg_name" {
-  description = "Resource group name"
+variable "location" {
+  description = "The Azure Region to deploy resources"
   type        = string
-  default     = "epicbook-rg"
+  default     = "South Africa North"
 }
 
-variable "vnet_cidr" {
-  description = "VNet CIDR block"
+variable "vm_size" {
+  description = "The size of the Virtual Machine"
   type        = string
-  default     = "10.0.0.0/16"
+  default     = "Standard_B2ats_v2"
 }
 
-variable "app_subnet_cidr" {
-  description = "App subnet CIDR"
-  type        = string
-  default     = "10.0.1.0/24"
-}
-
-variable "db_subnet_cidr" {
-  description = "DB subnet CIDR"
-  type        = string
-  default     = "10.0.2.0/24"
-}
-
-variable "admin_username" {
-  description = "Admin username for all VMs"
+variable "admin_user" {
+  description = "The admin username for the VM"
   type        = string
   default     = "azureuser"
 }
 
-variable "db_name" {
-  description = "Database name"
+variable "ssh_public_key_path" {
+  description = "Path to your local SSH public key"
+  type        = string
+  default     = "~/.ssh/id_ed25519.pub"
 }
 
-variable "db_admin_user" {
-  description = "Admin username for MySQL"
+variable "db_user" {
+  description = "MySQL Administrator Username"
   type        = string
-  default     = "azuredbadmin"
+  default     = "dbadmin"
 }
 
 variable "db_password" {
-  description = "Admin password for MySQL"
-  sensitive   = true
-}
-
-variable "db_zone" {
-  description = "Database SKU zone"
-  type = number
-  default = 3
-}
-
-variable "ssh_public_key" {
-  type = string
-}
-
-variable "resource_prefix" {
-  description = "Prefix for all resources"
+  description = "MySQL Administrator Password"
   type        = string
-  default     = "epicbook-dob"
-
-}
-
-variable "vm_size" {
-  type    = string
-  default = "Standard_B2ats_v2"
-}
-
-variable "location" {
-  type    = string
-  default = "westeurope"
-
-  validation {
-    condition = contains([
-      "westeurope"
-    ], var.location)
-
-    error_message = "Only westeurope is allowed in this environment."
-  }
+  sensitive   = true
 }
