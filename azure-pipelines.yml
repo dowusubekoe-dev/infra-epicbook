@@ -11,7 +11,7 @@ variables:
   - name: terraformVersion
     value: '1.8.5'
   - name: azureServiceConnection
-    value: 'azure-epicbook-spn'
+    value: 'azure-devops-epicbook-spn'
 
 steps:
   - checkout: self
