@@ -43,3 +43,7 @@ terraform.log
 *.pem
 *.key
 *.txt
+agents.md
+CLAUDE.md
+memory.md
+skills.md

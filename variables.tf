@@ -10,7 +10,7 @@ variable "vm_size" {
   description = "Azure VM size"
 }
 
-variable "admin_user" {
+variable "admin_username" {
   description = "VM admin username"
 }
 

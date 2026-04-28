@@ -3,7 +3,7 @@ output "public_ip" {
 }
 
 output "admin_user" {
-  value = var.admin_username
+  value = var.admin_user
 }
 
 output "db_host" {
