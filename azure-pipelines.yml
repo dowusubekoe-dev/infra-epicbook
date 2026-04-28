@@ -28,7 +28,7 @@ steps:
     name: sshPublicKey
     displayName: 'Download SSH public key'
     inputs:
-      secureFile: 'id_rsa_epicbook.pub'
+      secureFile: 'id_ed25519.pub'
 
   - script: |
       sudo apt-get update
@@ -46,8 +46,8 @@ steps:
 
   - script: |
       mkdir -p ~/.ssh
-      cp "$(sshPublicKey.secureFilePath)" ~/.ssh/id_rsa_epicbook.pub
-      chmod 644 ~/.ssh/id_rsa_epicbook.pub
+      cp "$(sshPublicKey.secureFilePath)" ~/.ssh/id_ed25519.pub
+      chmod 644 ~/.ssh/id_ed25519.pub
       ls -l ~/.ssh
     displayName: 'Prepare SSH Public Key'
 
